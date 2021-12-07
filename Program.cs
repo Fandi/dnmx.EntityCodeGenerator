@@ -43,7 +43,7 @@ namespace dnmx.EntityCodeGenerator
             string ns = string.Empty;
             string[] entityLogicalNames = Array.Empty<string>();
             string[] uiEntityLogicalNames = Array.Empty<string>();
-            string rootDir = Directory.GetCurrentDirectory();
+            string rootDir = null;
 
             for (int i = 0; i < args.Length; i++)
             {
@@ -91,9 +91,14 @@ namespace dnmx.EntityCodeGenerator
                 throw new Exception($"Connection string is required.");
             }
 
-            if (!string.IsNullOrWhiteSpace(ns))
+            if (rootDir is null)
             {
-                rootDir = Path.Combine(rootDir, ns);
+                rootDir = Directory.GetCurrentDirectory();
+
+                if (!string.IsNullOrWhiteSpace(ns))
+                {
+                    rootDir = Path.Combine(rootDir, ns);
+                }
             }
 
 
@@ -913,16 +918,6 @@ namespace dnmx.EntityCodeGenerator
 
                     var attributeMetadata = attributeMetadataWithPropertyName.Value;
                     var enumFieldName = attributeMetadataWithPropertyName.PropertyName;
-                    var propertyNameHashCode = enumFieldName.GetHashCode();
-
-                    if (propertyNameIndex.Contains(propertyNameHashCode))
-                    {
-                        remarked = true;
-                    }
-                    else
-                    {
-                        propertyNameIndex.Add(propertyNameHashCode);
-                    }
 
                     if (!first)
                     {
@@ -935,6 +930,17 @@ namespace dnmx.EntityCodeGenerator
                         if (enumFieldName.Equals(className))
                         {
                             remarked = true;
+                        }
+
+                        var propertyNameHashCode = enumFieldName.GetHashCode();
+
+                        if (propertyNameIndex.Contains(propertyNameHashCode))
+                        {
+                            remarked = true;
+                        }
+                        else
+                        {
+                            propertyNameIndex.Add(propertyNameHashCode);
                         }
 
                         if (attributeMetadata.AttributeType.Value == AttributeTypeCode.Boolean)
