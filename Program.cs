@@ -44,10 +44,11 @@ namespace dnmx.EntityCodeGenerator
             string[] entityLogicalNames = Array.Empty<string>();
             string[] uiEntityLogicalNames = Array.Empty<string>();
             string rootDir = null;
+            bool registerProxyTypesAssemblyFromServiceContext = false;
 
             for (int i = 0; i < args.Length; i++)
             {
-                var arg = args[i].Trim().ToLower();
+                var arg = args[i].Trim().ToLowerInvariant();
 
                 if (arg.StartsWith("/"))
                 {
@@ -79,6 +80,9 @@ namespace dnmx.EntityCodeGenerator
                             continue;
                         case "/output":
                             rootDir = args[i++ + 1].Trim();
+                            continue;
+                        case "/registerproxytypesassemblyfromservicecontext":
+                            registerProxyTypesAssemblyFromServiceContext = true;
                             continue;
                     }
                 }
@@ -363,8 +367,11 @@ namespace dnmx.EntityCodeGenerator
                             {
                                 using (var writer = new IndentedTextWriter(baseWriter, "\t"))
                                 {
-                                    writer.WriteLine("[assembly: Microsoft.Xrm.Sdk.Client.ProxyTypesAssemblyAttribute()]");
-                                    writer.WriteLine();
+                                    if (!registerProxyTypesAssemblyFromServiceContext)
+                                    {
+                                        writer.WriteLine("[assembly: Microsoft.Xrm.Sdk.Client.ProxyTypesAssemblyAttribute()]");
+                                        writer.WriteLine();
+                                    }
 
                                     if (!string.IsNullOrWhiteSpace(ns))
                                     {
@@ -377,7 +384,15 @@ namespace dnmx.EntityCodeGenerator
                                     writer.WriteLine(prefix + "{");
                                     writer.Indent++;
 
-                                    writer.WriteLine(prefix + $"public {serviceContextName}(Microsoft.Xrm.Sdk.IOrganizationService service) : base(service)");
+                                    if (registerProxyTypesAssemblyFromServiceContext)
+                                    {
+                                        writer.WriteLine(prefix + $"public {serviceContextName}(Microsoft.Xrm.Sdk.IOrganizationService service) : base(service, true)");
+                                    }
+                                    else
+                                    {
+                                        writer.WriteLine(prefix + $"public {serviceContextName}(Microsoft.Xrm.Sdk.IOrganizationService service) : base(service)");
+                                    }
+
                                     writer.WriteLine(prefix + "{");
                                     writer.Indent++;
 
